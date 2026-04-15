@@ -10,11 +10,15 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const { signup, isLoading, error } = useAuthStore();
 
-  const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    const { message } = signup(username, email, password);
-    toast.success(message);
-    navigate("/");
+    try {
+      const { message } = await signup(username, email, password);
+      toast.success(message);
+      navigate("/signin");
+    } catch (err) {
+      console.error(err);
+    }
   };
   return (
     <div

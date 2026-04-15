@@ -1,45 +1,72 @@
 import { create } from "zustand";
 
+const API_URL = "http://localhost:5000/api/auth";
+
 export const useAuthStore = create((set) => ({
-  user: {
-    username: "Jane Doe",
-    email: "janedoe@gmail.com",
-    avatar: "https://i.pravatar.cc/150?u=jane",
-  },
+  user: JSON.parse(localStorage.getItem("user")) || null,
+  token: localStorage.getItem("token") || null,
   isLoading: false,
   error: null,
 
-  login: (username, password) => {
-    set({ isLoading: true });
-    // Simulate a brief delay if needed, but the user asked to remove async logic
-    set({
-      user: {
-        username: username || "Jane Doe",
-        email: "janedoe@gmail.com",
-        avatar: "https://i.pravatar.cc/150?u=jane",
-      },
-      isLoading: false,
-      error: null,
-    });
-    return { success: true, message: "Logged in successfully (Mock)" };
+  login: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      set({
+        user: data.user,
+        token: data.token,
+        isLoading: false,
+        error: null,
+      });
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
   },
 
-  signup: (username, email, password) => {
-    set({ isLoading: true });
-    set({
-      user: {
-        username: username,
-        email: email,
-        avatar: "https://i.pravatar.cc/150?u=jane",
-      },
-      isLoading: false,
-      error: null,
-    });
-    return { success: true, message: "Signed up successfully (Mock)" };
+  signup: async (username, email, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_URL}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+
+      set({ isLoading: false, error: null });
+      return { success: true, message: data.message };
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
   },
 
   logout: () => {
-    set({ user: null });
-    return { success: true, message: "Logged out successfully (Mock)" };
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    set({ user: null, token: null });
+    return { success: true, message: "Logged out successfully" };
   },
 }));

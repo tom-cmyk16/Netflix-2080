@@ -11,11 +11,15 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const { login, isLoading, error } = useAuthStore();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const { message } = login(username, password);
-    toast.success(message);
-    navigate("/");
+    try {
+      const { message } = await login(username, password);
+      toast.success(message);
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
